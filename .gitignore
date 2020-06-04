@@ -1,2 +1,8 @@
+# Python stuff
 .venv
 *.egg-info
+.mypy_cache
+__pycache__
+
+# Editor config
+.vscode

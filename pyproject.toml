@@ -6,6 +6,10 @@ authors = ["Matt Wetmore <wetmore.matt@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
+fbchat = "2.0.0a2"
+attr = "^0.3.1"
+blinker = "^1.4"
+rx = "^3.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"
