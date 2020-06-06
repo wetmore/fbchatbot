@@ -1,19 +1,32 @@
 import atexit
+from typing import List
 
 import attr
 import fbchat
-import rx
-import rx.operators
 
-from .listeners import EventListeners
+from .plugin import Plugin
+from .base_plugin import base_plugin
 from .util import get_session, save_session
 
 
 @attr.s
-class Patrick:
-    config = attr.ib()
+class Patrick(Plugin):
+    config = attr.ib(kw_only=True)
 
-    _listeners: EventListeners = attr.ib(EventListeners())
+    # TODO...
+    queue = attr.ib(default=None)
+
+    plugins: List[Plugin] = attr.ib([])
+
+    def __attrs_post_init__(self):
+        # Load base plugin
+        self.load_plugin(base_plugin)
+
+    def load_plugin(self, plugin):
+        self.plugins.append(plugin)
+
+    def handle_event(self, event):
+        self._listeners.handle(event, self)
 
     def listen(self):
         session, status = get_session(self.config)
@@ -26,19 +39,7 @@ class Patrick:
         # Listener event loop
         print("Listening...")
         for event in chat_listener.listen():
-            self._listeners.handle(event)
-
-        # source = rx.operators.publish(rx.from_(listener.listen()))
-
-        # source.subscribe(lambda value: print("Received {0}".format(value)),)
-        # source.subscribe(lambda value: print("Received again {0}".format(value)))
-
-        # source.connect()
-
-        # for event in listener.listen():
-        #    print(event)
-
-        # Don't send any thread events down the event bus if the thread is not in the allow list
-        # if isinstance(event, fbchat.ThreadEvent) and ignore_thread(event.thread.id):
-        #     continue
-        # event_bus.send(type(event), event=event)
+            # TODO Add thread filtering
+            self._listeners.handle(event, self)
+            for plugin in self.plugins:
+                plugin._listeners.handle(event, self)

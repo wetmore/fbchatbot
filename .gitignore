@@ -6,3 +6,7 @@ __pycache__
 
 # Editor config
 .vscode
+
+# TODO remove these. ignoring bc contains login info
+config.py
+session.json
