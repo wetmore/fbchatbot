@@ -1,5 +1,6 @@
 import atexit
 from typing import List
+from datetime import datetime
 
 import attr
 import fbchat
@@ -23,12 +24,17 @@ class Patrick(Plugin):
         self.load_plugin(base_plugin)
 
     def load_plugin(self, plugin):
+        """Load a plugin."""
         self.plugins.append(plugin)
 
     def handle_event(self, event):
+        print(datetime.now().strftime("%b %d %Y %H:%M:%S"), "\n", event)
         self._listeners.handle(event, self)
+        for plugin in self.plugins:
+            plugin._listeners.handle(event, self)
 
     def listen(self):
+        """Log in to facebook messenger and start listening for and handling events."""
         session, status = get_session(self.config)
         atexit.register(lambda: save_session(session))
         print(f"{status}, user {session.user.id}")
@@ -40,6 +46,4 @@ class Patrick(Plugin):
         print("Listening...")
         for event in chat_listener.listen():
             # TODO Add thread filtering
-            self._listeners.handle(event, self)
-            for plugin in self.plugins:
-                plugin._listeners.handle(event, self)
+            self.handle_event(event)

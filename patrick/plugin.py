@@ -1,10 +1,3 @@
-"""
-you register commands, listeners, and derivers on instances of Plugin.
-Patrick also inherits from Plugin, so you can register listeners on a patrick
-instance
-"""
-
-from abc import ABC, abstractclassmethod
 import inspect
 from functools import wraps
 
@@ -29,7 +22,13 @@ _mismatch_error = """
 
 @attr.s
 class Plugin:
-    #: Name for the plugin.
+    """
+    you register commands, listeners, and derivers on instances of Plugin.
+    Patrick also inherits from Plugin, so you can register listeners on a patrick
+    instance.
+    """
+
+    #: Name used to refer to the plugin, e.g. when writing config.py for a bot.
     name: str = attr.ib()
 
     #: Event listeners registered to the plugin with @plugin.listener()
@@ -39,27 +38,27 @@ class Plugin:
 
     def listener(self, event_type=None):
         """
-            Decorator for defining event listeners for the bot. An event listener is
-            a function which is called whenever a particular type of event occurs.
-            The argument is an instance of that event type. The type of event the
-            listener responds to can be specified by passing it to the listener:
+        Decorator for defining event listeners for a plugin. An event listener is
+        a function which is called whenever a particular type of event occurs.
+        The argument is an instance of that event type. The type of event the
+        listener responds to can be specified by passing it to the listener:
 
-            ```
-            @listener(fbchat.MessageEvent)
-            def handle_message(event):
-                print(event.message.text)
-            ```
+        ```
+        @plugin.listener(fbchat.MessageEvent)
+        def handle_message(event):
+            print(event.message.text)
+        ```
 
-            or simply by annotating the event argument (preferred):
+        or simply by annotating the event argument (preferred):
 
-            ```
-            @listener()
-            def handle_message(event: fbchat.MessageEvent):
-                print(event.message.text)
-            ```
+        ```
+        @plugin.listener()
+        def handle_message(event: fbchat.MessageEvent):
+            print(event.message.text)
+        ```
 
-            Either method may be used, but if the event type is specified using both
-            methods at the same time, the provided types must match.
+        Either method may be used, but if the event type is specified using both
+        methods at the same time, the provided types must match.
         """
 
         def decorator(func: Handler):
