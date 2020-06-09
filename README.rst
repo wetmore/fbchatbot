@@ -7,6 +7,30 @@ Very much still in progress! :construction_worker:
 
 Very much subject to breaking change! :trollface:
 
+Example:
+
+.. code-block:: python
+
+    import config
+    from patrick import Patrick, CommandEvent, MessageEvent
+
+
+    bot = Patrick(config=config)
+
+
+    @bot.listener()
+    def my_echo(e: MessageEvent):
+        print("bot heard: " + e.message.text)
+
+
+    @bot.command("hi")
+    def say_hi(e: CommandEvent):
+        """Say hi back"""
+        e.thread.send_text("Hello")
+
+
+    bot.listen()
+
 Features
 --------
 
@@ -42,7 +66,6 @@ Break functionality into plugins! Distribute them, maybe one day.
 On the roadmap
 --------------
 
-- Commands!
 - Logging plugin!
 - Optional message queue!
 - Configure behavior at the user/group thread level
@@ -51,24 +74,8 @@ On the roadmap
 Examples
 --------
 
-.. code-block:: python
-
-    import config
-    from fbchat import MessageEvent
-    from patrick import Patrick
-
-
-    bot = Patrick("Patrick", config=config)
-
-
-    @bot.listener()
-    def my_echo(e: MessageEvent):
-        print("bot: " + e.message.text)
-
-
-    bot.listen()
-    
-Plugin example:
+Plugin example
+~~~~~~~~~~~~~~
 
 ``my_plugin.py``
 
@@ -77,7 +84,7 @@ Plugin example:
     from patrick import Plugin
 
 
-    my_plugin = Plugin("MyPlugin", config=config)
+    my_plugin = Plugin("MyPlugin")
     
     @my_plugin.listener()
     def my_echo(e: MessageEvent):
