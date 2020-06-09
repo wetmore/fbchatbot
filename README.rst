@@ -77,7 +77,7 @@ Plugin example:
     from patrick import Plugin
 
 
-    my_plugin = Plugin("Patrick", config=config)
+    my_plugin = Plugin("MyPlugin", config=config)
     
     @my_plugin.listener()
     def my_echo(e: MessageEvent):
