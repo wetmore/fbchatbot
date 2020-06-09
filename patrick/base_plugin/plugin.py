@@ -1,3 +1,3 @@
 from ..plugin import Plugin
 
-base_plugin = Plugin("base")
+base_plugin = Plugin(name="base")

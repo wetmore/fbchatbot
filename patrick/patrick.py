@@ -1,17 +1,19 @@
 import atexit
-from typing import List
+from typing import List, TYPE_CHECKING
 from datetime import datetime
 
 import attr
 import fbchat
 
-from .plugin import Plugin
-from .base_plugin import base_plugin
+# from .base_plugin import base_plugin
 from .util import get_session, save_session
+from .event_handler import EventsHandler
+from .core_events import create_core_event_listeners
+from .plugin import Plugin
 
 
 @attr.s
-class Patrick(Plugin):
+class Patrick(EventsHandler):
     config = attr.ib(kw_only=True)
 
     # TODO...
@@ -21,17 +23,19 @@ class Patrick(Plugin):
 
     def __attrs_post_init__(self):
         # Load base plugin
-        self.load_plugin(base_plugin)
+        #  self.load_plugin(base_plugin)
+        self._attach_command_listener()
+        create_core_event_listeners(self)
 
-    def load_plugin(self, plugin):
+    def load_plugin(self, plugin: Plugin):
         """Load a plugin."""
         self.plugins.append(plugin)
 
-    def handle_event(self, event):
+    def handle(self, event):
         print(datetime.now().strftime("%b %d %Y %H:%M:%S"), "\n", event)
-        self._listeners.handle(event, self)
+        self.handle_event(event, self)
         for plugin in self.plugins:
-            plugin._listeners.handle(event, self)
+            plugin.handle_event(event, self)
 
     def listen(self):
         """Log in to facebook messenger and start listening for and handling events."""
@@ -46,4 +50,4 @@ class Patrick(Plugin):
         print("Listening...")
         for event in chat_listener.listen():
             # TODO Add thread filtering
-            self.handle_event(event)
+            self.handle(event)

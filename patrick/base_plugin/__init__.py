@@ -4,5 +4,4 @@ library.
 """
 
 from .listeners import *
-from .events import *
 from .plugin import base_plugin
