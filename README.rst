@@ -7,6 +7,31 @@ Very much still in progress! :construction_worker:
 
 Very much subject to breaking change! :trollface:
 
+Example:
+
+.. code-block:: python
+
+    import config
+    from fbchat import MessageEvent
+    from patrick import Patrick, CommandEvent
+
+
+    bot = Patrick(config=config)
+
+
+    @bot.listener()
+    def my_echo(e: MessageEvent):
+        print("bot heard: " + e.message.text)
+
+
+    @bot.command("hi")
+    def say_hi(e: CommandEvent):
+        """Say hi back"""
+        e.thread.send_text("Hello")
+
+
+    bot.listen()
+
 Features
 --------
 
