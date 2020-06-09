@@ -15,8 +15,8 @@ from .plugin import Plugin
 
 
 @attr.s
-class Patrick(EventsHandler):
-    name = attr.ib("Patrick")
+class Chatbot(EventsHandler):
+    name = attr.ib("Chatbot")
 
     config = attr.ib(kw_only=True)
 

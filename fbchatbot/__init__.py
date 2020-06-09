@@ -1,6 +1,6 @@
 
-# Expose the Patrick class, used to define a bot
-from .patrick import Patrick
+# Expose the Chatbot class, used to define a bot
+from .fbchatbot import Chatbot
 
 # Expose the Plugin class, used to define bot plugins
 from .plugin import Plugin

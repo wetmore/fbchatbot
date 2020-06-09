@@ -1,9 +1,9 @@
 import config
 from fbchat import MessageEvent
-from patrick import Patrick, CommandEvent
+from fbchatbot import Chatbot, CommandEvent
 
 
-bot = Patrick(config=config)
+bot = Chatbot(config=config)
 
 
 @bot.listener()

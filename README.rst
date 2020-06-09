@@ -1,4 +1,4 @@
-``Patrick`` - A framework for writing FB Messenger bots
+``fbchatbot`` - A framework for writing FB Messenger bots
 =======================================================
 
 `fbchat <https://github.com/carpedm20/fbchat>`__ does all the heavy lifting. Thanks fbchat!
@@ -12,10 +12,10 @@ Example:
 .. code-block:: python
 
     import config
-    from patrick import Patrick, CommandEvent, MessageEvent
+    from fbchatbot import Chatbot, CommandEvent, MessageEvent
 
 
-    bot = Patrick(config=config)
+    bot = Chatbot(config=config)
 
 
     @bot.listener()
@@ -81,7 +81,7 @@ Plugin example
 
 .. code-block:: python
 
-    from patrick import Plugin
+    from fbchatbot import Plugin
 
 
     my_plugin = Plugin("MyPlugin")
@@ -97,9 +97,9 @@ Plugin example
 
     import config
     from .my_plugin import my_plugin
-    from patrick import Patrick
+    from fbchatbot import Chatbot
 
 
-    bot = Patrick("Patrick", config=config)
+    bot = Chatbot(config=config)
     bot.load_plugin(my_plugin)
     bot.listen()
