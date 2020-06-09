@@ -52,17 +52,27 @@ class EventsHandler:
     )
 
     #: Commands registered to the EventsHandler with @handler.command('command')
+    # TODO make str map to a single command
     _commands: DefaultDict[str, List[Command]] = attr.ib(defaultdict(list))
 
     def __attrs_post_init__(self):
         self._attach_command_listener()
 
     def _attach_command_listener(self):
-        # Attach a listener to handle commands.
+        """Attach a listener to handle commands."""
+
         @self.listener()
         def handle_command(event: CommandEvent, bot: Bot):
             for command in self._commands[event.command]:
                 command.func(event, bot)
+
+    def get_commands(self, specified_command: Optional[str] = None):
+        names_and_help = []
+        for name, command in self._commands.items():
+            if specified_command and name != specified_command:
+                continue
+            names_and_help.append((name, command[0].docs or ""))
+        return names_and_help
 
     def handle_event(self, event: Event, bot: Bot):
         for listener in self._listeners[type(event)]:

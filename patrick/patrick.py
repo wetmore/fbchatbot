@@ -1,5 +1,5 @@
 import atexit
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 from datetime import datetime
 
 import attr
@@ -9,6 +9,7 @@ import fbchat
 from .util import get_session, save_session
 from .events_handler import EventsHandler
 from .core_events import create_core_event_listeners
+from .core_commands import register_core_commands
 from .plugin import Plugin
 
 
@@ -26,6 +27,7 @@ class Patrick(EventsHandler):
         #  self.load_plugin(base_plugin)
         self._attach_command_listener()
         create_core_event_listeners(self)
+        register_core_commands(self)
 
     def load_plugin(self, plugin: Plugin):
         """Load a plugin."""
@@ -36,6 +38,12 @@ class Patrick(EventsHandler):
         self.handle_event(event, self)
         for plugin in self.plugins:
             plugin.handle_event(event, self)
+
+    def get_all_commands(self, command: Optional[str] = None):
+        commands = self.get_commands(command)
+        for plugin in self.plugins:
+            commands = commands + plugin.get_commands(command)
+        return commands
 
     def listen(self):
         """Log in to facebook messenger and start listening for and handling events."""

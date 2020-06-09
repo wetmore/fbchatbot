@@ -115,7 +115,7 @@ def create_core_event_listeners(bot: "EventsHandler"):
                         message=event.message,
                         at=event.at,
                         command=command,
-                        command_body=body,
+                        command_body=body.strip(),
                     )
                 )
 
@@ -131,6 +131,6 @@ def create_core_event_listeners(bot: "EventsHandler"):
                     message=event.message,
                     at=event.at,
                     command=command,
-                    command_body=body,
+                    command_body=body.strip(),
                 )
             )
