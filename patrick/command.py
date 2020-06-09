@@ -13,7 +13,7 @@ class Command:
     command: str = attr.ib()
 
     #: Help string documenting the command
-    docs: str = attr.ib()
+    docs: Optional[str] = attr.ib()
 
     #: Function invoked when command is called.
     func: Callable[[CommandEvent, Bot], None] = attr.ib()

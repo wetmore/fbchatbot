@@ -128,10 +128,8 @@ class EventsHandler:
             def handler(event: CommandEvent, bot: Bot):
                 func(event) if len(spec.args) == 1 else func(event, bot)
 
-            docs = func.__doc__ or "No help available for this command"
-
             self._commands[cmd_name].append(
-                Command(command=cmd_name, docs=docs, func=handler)
+                Command(command=cmd_name, docs=func.__doc__, func=handler)
             )
 
         return decorator
