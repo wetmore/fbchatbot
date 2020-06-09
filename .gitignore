@@ -3,10 +3,11 @@
 *.egg-info
 .mypy_cache
 __pycache__
+dist
 
 # Editor config
 .vscode
 
-# TODO remove these. ignoring bc contains login info
+# TODO remove these or at least move examples. ignoring bc contains login info
 config.py
 session.json

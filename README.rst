@@ -1,5 +1,5 @@
 ``fbchatbot`` - A framework for writing FB Messenger bots
-=======================================================
+=========================================================
 
 `fbchat <https://github.com/carpedm20/fbchat>`__ does all the heavy lifting. Thanks fbchat!
 
@@ -40,7 +40,7 @@ Built-in events
 Comes with new events, normalizing the ones fbchat provides to make some tasks easier
 
 Type-directed event listeners
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use type hints to specify what events to listen for:
 

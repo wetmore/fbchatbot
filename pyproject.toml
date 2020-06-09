@@ -3,6 +3,7 @@ name = "fbchatbot"
 version = "0.1.0"
 description = "Easily define chatbots for Facebook Messenger"
 authors = ["Matthew Wetmore <wetmore.matt@gmail.com>"]
+readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -12,6 +13,7 @@ fbchat = "2.0.0a2"
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"
 sphinx = "^3.1.0"
+twine = "^3.1.1"
 
 [build-system]
 requires = ["poetry>=0.12"]
