@@ -12,8 +12,7 @@ Example:
 .. code-block:: python
 
     import config
-    from fbchat import MessageEvent
-    from patrick import Patrick, CommandEvent
+    from patrick import Patrick, CommandEvent, MessageEvent
 
 
     bot = Patrick(config=config)
@@ -67,7 +66,6 @@ Break functionality into plugins! Distribute them, maybe one day.
 On the roadmap
 --------------
 
-- Commands!
 - Logging plugin!
 - Optional message queue!
 - Configure behavior at the user/group thread level
@@ -76,24 +74,8 @@ On the roadmap
 Examples
 --------
 
-.. code-block:: python
-
-    import config
-    from fbchat import MessageEvent
-    from patrick import Patrick
-
-
-    bot = Patrick("Patrick", config=config)
-
-
-    @bot.listener()
-    def my_echo(e: MessageEvent):
-        print("bot: " + e.message.text)
-
-
-    bot.listen()
-    
-Plugin example:
+Plugin example
+~~~~~~~~~~~~~~
 
 ``my_plugin.py``
 
@@ -102,7 +84,7 @@ Plugin example:
     from patrick import Plugin
 
 
-    my_plugin = Plugin("MyPlugin", config=config)
+    my_plugin = Plugin("MyPlugin")
     
     @my_plugin.listener()
     def my_echo(e: MessageEvent):
