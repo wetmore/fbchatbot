@@ -7,7 +7,7 @@ import fbchat
 
 # from .base_plugin import base_plugin
 from .util import get_session, save_session
-from .event_handler import EventsHandler
+from .events_handler import EventsHandler
 from .core_events import create_core_event_listeners
 from .plugin import Plugin
 

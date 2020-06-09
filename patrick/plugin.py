@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import attr
 
-from .event_handler import EventsHandler
+from .events_handler import EventsHandler
 
 
 @attr.s

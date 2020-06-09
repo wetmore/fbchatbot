@@ -10,8 +10,11 @@ import fbchat
 
 from .types_util import Bot
 
+# Avoid a circular import issue; this file needs EventsHandler as a type for the
+# argument of create_core_event_listeners, but events_handler needs this file for
+# the CommandEvent type.
 if TYPE_CHECKING:
-    from .event_handler import EventsHandler
+    from .events_handler import EventsHandler
 
 
 @attr.s(slots=True, kw_only=True, frozen=True)
@@ -49,7 +52,9 @@ class CommandEvent(MessageEvent):
 
 
 def create_core_event_listeners(bot: "EventsHandler"):
-    """"""
+    """
+    Register listeners which derive the core events on a provided EventsHandler.
+    """
 
     @bot.listener()
     def fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
