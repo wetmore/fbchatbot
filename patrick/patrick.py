@@ -1,4 +1,5 @@
 import atexit
+import logging
 from typing import List, Optional, TYPE_CHECKING
 from datetime import datetime
 
@@ -8,13 +9,15 @@ import fbchat
 # from .base_plugin import base_plugin
 from .util import get_session, save_session
 from .events_handler import EventsHandler
-from .core_events import create_core_event_listeners
+from .core_events import register_core_event_listeners
 from .core_commands import register_core_commands
 from .plugin import Plugin
 
 
 @attr.s
 class Patrick(EventsHandler):
+    name = attr.ib("Patrick")
+
     config = attr.ib(kw_only=True)
 
     # TODO...
@@ -25,8 +28,12 @@ class Patrick(EventsHandler):
     def __attrs_post_init__(self):
         # Load base plugin
         #  self.load_plugin(base_plugin)
-        self._attach_command_listener()
-        create_core_event_listeners(self)
+        # Configure logging
+        log_level = self.config.LOG_LEVEL or logging.WARNING
+        logging.basicConfig(level=log_level)
+        # Register core event listeners and commands
+        super().__attrs_post_init__()  # This sets up the command listener
+        register_core_event_listeners(self)
         register_core_commands(self)
 
     def load_plugin(self, plugin: Plugin):
@@ -39,7 +46,7 @@ class Patrick(EventsHandler):
         for plugin in self.plugins:
             plugin.handle_event(event, self)
 
-    def get_all_commands(self, command: Optional[str] = None):
+    def get_all_commands(self, command: str = ""):
         commands = self.get_commands(command)
         for plugin in self.plugins:
             commands = commands + plugin.get_commands(command)

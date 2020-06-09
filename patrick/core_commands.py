@@ -9,12 +9,12 @@ def register_core_commands(bot: EventsHandler):
         """
         Show all commands, or use '.help <cmd>' to show help for the command with name <cmd>.
         """
-        command = event.command_body or None
+        command = event.command_body
         commands = bot.get_all_commands(command)
 
         message = ""
         for name, doc in commands:
-            message = message + f"*{name}*\n{doc.strip()}\n"
+            message = message + f"*{name}*\n{doc}\n"
 
         if not message:
             message = f"No command found with name *{command}*."

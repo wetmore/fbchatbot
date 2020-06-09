@@ -1,7 +1,8 @@
 from collections import defaultdict
 from functools import wraps
 import inspect
-from typing import Callable, Optional, Protocol, DefaultDict, Type, List
+import logging
+from typing import Callable, Optional, Protocol, DefaultDict, Type, List, Tuple
 
 import attr
 from fbchat import Event
@@ -45,6 +46,14 @@ class EventListener:
 
 @attr.s
 class EventsHandler:
+    """
+    An EventsHandler instance provides `listener()` and `command()` decorators, which
+    are used to register event listener and commands to the instance. This class is a
+    base for both a bot and for a plugin.
+    """
+
+    #: Name, used for logging
+    name: str = attr.ib()
 
     #: Event listeners registered to the EventsHandler with @handler.listener()
     _listeners: DefaultDict[Type[Event], List[EventListener]] = attr.ib(
@@ -56,25 +65,27 @@ class EventsHandler:
     _commands: DefaultDict[str, List[Command]] = attr.ib(defaultdict(list))
 
     def __attrs_post_init__(self):
-        self._attach_command_listener()
+        self._register_command_listener()
 
-    def _attach_command_listener(self):
-        """Attach a listener to handle commands."""
+    def _register_command_listener(self):
+        """Register a listener to handle commands."""
 
         @self.listener()
         def handle_command(event: CommandEvent, bot: Bot):
             for command in self._commands[event.command]:
                 command.func(event, bot)
 
-    def get_commands(self, specified_command: Optional[str] = None):
-        names_and_help = []
+    def get_commands(self, specified_command: str = "") -> List[Tuple[str, str]]:
+        """Return a list of commands and their docs registered to this EventsListener."""
+        names_and_docs = []
         for name, command in self._commands.items():
             if specified_command and name != specified_command:
                 continue
-            names_and_help.append((name, command[0].docs or ""))
-        return names_and_help
+            names_and_docs.append((name, command[0].docs))
+        return names_and_docs
 
     def handle_event(self, event: Event, bot: Bot):
+        """Call every registered listener for a provided event."""
         for listener in self._listeners[type(event)]:
             listener.func(event, bot)
 
@@ -121,9 +132,12 @@ class EventsHandler:
             def handler(event: Event, bot: Bot):
                 func(event) if len(spec.args) == 1 else func(event, bot)
 
-            self._listeners[_event_type].append(
-                EventListener(event=_event_type, func=handler)
-            )
+            event_listener = EventListener(event=_event_type, func=handler)
+
+            self._listeners[_event_type].append(event_listener)
+
+            logging.info(f"Registered {event_listener} on {self.name}")
+
             return func  # TODO should i return something else?
 
         return decorator
@@ -138,8 +152,15 @@ class EventsHandler:
             def handler(event: CommandEvent, bot: Bot):
                 func(event) if len(spec.args) == 1 else func(event, bot)
 
-            self._commands[cmd_name].append(
-                Command(command=cmd_name, docs=func.__doc__, func=handler)
-            )
+            # Strip any indentation on the docstring
+            docs = (func.__doc__ or "").strip()
+
+            command = Command(command=cmd_name, docs=docs, func=handler)
+
+            self._commands[cmd_name].append(command)
+
+            logging.info(f"Registered {command} on {self.name}")
+
+            return func
 
         return decorator

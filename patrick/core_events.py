@@ -51,7 +51,7 @@ class CommandEvent(MessageEvent):
     command_body: str = attr.ib()
 
 
-def create_core_event_listeners(bot: "EventsHandler"):
+def register_core_event_listeners(bot: "EventsHandler"):
     """
     Register listeners which derive the core events on a provided EventsHandler.
     """
