@@ -9,8 +9,8 @@ import fbchat
 # from .base_plugin import base_plugin
 from .util import get_session, save_session
 from .events_handler import EventsHandler
-from .core_events import register_core_event_listeners
-from .core_commands import register_core_commands
+from .core_events import core_listeners
+from .core_commands import core_commands
 from .plugin import Plugin
 
 
@@ -33,8 +33,10 @@ class Chatbot(EventsHandler):
         logging.basicConfig(level=log_level)
         # Register core event listeners and commands
         super().__attrs_post_init__()  # This sets up the command listener
-        register_core_event_listeners(self)
-        register_core_commands(self)
+        for listener in core_listeners:
+            self.listener()(listener)
+        for name, handler in core_commands.items():
+            self.command(name)(handler)
 
     def load_plugin(self, plugin: Plugin):
         """Load a plugin."""

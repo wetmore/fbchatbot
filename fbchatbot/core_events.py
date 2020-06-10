@@ -10,12 +10,6 @@ import fbchat
 
 from .types_util import Bot
 
-# Avoid a circular import issue; this file needs EventsHandler as a type for the
-# argument of create_core_event_listeners, but events_handler needs this file for
-# the CommandEvent type.
-if TYPE_CHECKING:
-    from .events_handler import EventsHandler
-
 
 @attr.s(slots=True, kw_only=True, frozen=True)
 class MessageEvent(fbchat.MessageEvent):
@@ -51,77 +45,56 @@ class CommandEvent(MessageEvent):
     command_body: str = attr.ib()
 
 
-def register_core_event_listeners(bot: "EventsHandler"):
-    """
-    Register listeners which derive the core events on a provided EventsHandler.
-    """
+def fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
+    bot_id = event.thread.session.user.id
+    if event.author.id != bot_id:
+        bot.handle(
+            MessageEvent(  # type: ignore
+                author=event.author,
+                thread=event.thread,
+                message=event.message,
+                at=event.at,
+            )
+        )
 
-    @bot.listener()
-    def fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
-        bot_id = event.thread.session.user.id
-        if event.author.id != bot_id:
+
+def fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
+    bot_id = event.thread.session.user.id
+    if event.author.id != bot_id:
+        bot.handle(
+            MessageEvent(  # type: ignore
+                author=event.author,
+                thread=event.thread,
+                message=event.message,
+                at=event.message.created_at,
+                # BUG this doesn't seem to be populated when you reply to yourself
+                replied_to=event.replied_to,
+            )
+        )
+
+
+def message_to_mention(event: MessageEvent, bot: Bot):
+    bot_id = event.thread.session.user.id
+    for mention in event.message.mentions:
+        if mention.thread_id == str(bot_id):
             bot.handle(
-                MessageEvent(  # type: ignore
+                MentionEvent(  # type: ignore
                     author=event.author,
                     thread=event.thread,
                     message=event.message,
                     at=event.at,
+                    mention=mention,
                 )
             )
 
-    @bot.listener()
-    def fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
-        bot_id = event.thread.session.user.id
-        if event.author.id != bot_id:
-            bot.handle(
-                MessageEvent(  # type: ignore
-                    author=event.author,
-                    thread=event.thread,
-                    message=event.message,
-                    at=event.message.created_at,
-                    # BUG this doesn't seem to be populated when you reply to yourself
-                    replied_to=event.replied_to,
-                )
-            )
 
-    @bot.listener()
-    def message_to_mention(event: MessageEvent, bot: Bot):
-        bot_id = event.thread.session.user.id
-        for mention in event.message.mentions:
-            if mention.thread_id == str(bot_id):
-                bot.handle(
-                    MentionEvent(  # type: ignore
-                        author=event.author,
-                        thread=event.thread,
-                        message=event.message,
-                        at=event.at,
-                        mention=mention,
-                    )
-                )
+cmd_regex = re.compile("^(\w+)(.*)")
+cmd_regex_dot = re.compile("^\.(\w+)(.*)")
 
-    cmd_regex = re.compile("^(\w+)(.*)")
-    cmd_regex_dot = re.compile("^\.(\w+)(.*)")
 
-    @bot.listener()
-    def mention_to_command(event: MentionEvent, bot: Bot):
-        if event.mention.offset == 0:
-            match = cmd_regex.match(event.message.text[event.mention.length :].strip())
-            if match:
-                command, body = match.groups()
-                bot.handle(
-                    CommandEvent(  # type: ignore
-                        author=event.author,
-                        thread=event.thread,
-                        message=event.message,
-                        at=event.at,
-                        command=command,
-                        command_body=body.strip(),
-                    )
-                )
-
-    @bot.listener()
-    def message_to_command(event: MessageEvent, bot: Bot):
-        match = cmd_regex_dot.match(event.message.text)
+def mention_to_command(event: MentionEvent, bot: Bot):
+    if event.mention.offset == 0:
+        match = cmd_regex.match(event.message.text[event.mention.length :].strip())
         if match:
             command, body = match.groups()
             bot.handle(
@@ -134,3 +107,28 @@ def register_core_event_listeners(bot: "EventsHandler"):
                     command_body=body.strip(),
                 )
             )
+
+
+def message_to_command(event: MessageEvent, bot: Bot):
+    match = cmd_regex_dot.match(event.message.text)
+    if match:
+        command, body = match.groups()
+        bot.handle(
+            CommandEvent(  # type: ignore
+                author=event.author,
+                thread=event.thread,
+                message=event.message,
+                at=event.at,
+                command=command,
+                command_body=body.strip(),
+            )
+        )
+
+
+core_listeners = [
+    fbMessage_to_message,
+    fbMessageReply_to_message,
+    message_to_mention,
+    mention_to_command,
+    message_to_command,
+]
