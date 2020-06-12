@@ -1,14 +1,14 @@
 import config
-from fbchat import MessageEvent
-from fbchatbot import Chatbot, CommandEvent
+from fbchatbot import Chatbot
+from fbchatbot.core_events import CommandEvent, TextMessageEvent
 
 
 bot = Chatbot(config=config)
 
 
 @bot.listener()
-def my_echo(e: MessageEvent):
-    print("bot: " + e.message.text)
+def my_echo(e: TextMessageEvent):
+    print(e.text)
 
 
 @bot.command("hi")
