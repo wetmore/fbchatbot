@@ -45,7 +45,7 @@ class CommandEvent(MessageEvent):
     command_body: str = attr.ib()
 
 
-def fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
+def _fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     if event.author.id != bot_id:
         bot.handle(
@@ -58,7 +58,7 @@ def fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
         )
 
 
-def fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
+def _fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     if event.author.id != bot_id:
         bot.handle(
@@ -73,7 +73,7 @@ def fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
         )
 
 
-def message_to_mention(event: MessageEvent, bot: Bot):
+def _message_to_mention(event: MessageEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     for mention in event.message.mentions:
         if mention.thread_id == str(bot_id):
@@ -92,7 +92,7 @@ cmd_regex = re.compile("^(\w+)(.*)")
 cmd_regex_dot = re.compile("^\.(\w+)(.*)")
 
 
-def mention_to_command(event: MentionEvent, bot: Bot):
+def _mention_to_command(event: MentionEvent, bot: Bot):
     if event.mention.offset == 0:
         match = cmd_regex.match(event.message.text[event.mention.length :].strip())
         if match:
@@ -109,7 +109,7 @@ def mention_to_command(event: MentionEvent, bot: Bot):
             )
 
 
-def message_to_command(event: MessageEvent, bot: Bot):
+def _message_to_command(event: MessageEvent, bot: Bot):
     match = cmd_regex_dot.match(event.message.text)
     if match:
         command, body = match.groups()
@@ -126,9 +126,9 @@ def message_to_command(event: MessageEvent, bot: Bot):
 
 
 core_listeners = [
-    fbMessage_to_message,
-    fbMessageReply_to_message,
-    message_to_mention,
-    mention_to_command,
-    message_to_command,
+    _fbMessage_to_message,
+    _fbMessageReply_to_message,
+    _message_to_mention,
+    _mention_to_command,
+    _message_to_command,
 ]

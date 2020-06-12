@@ -26,12 +26,12 @@ _mismatch_error = """
 """
 
 
-class ListenerHandler(Protocol):
+class _ListenerHandler(Protocol):
     def __call__(self, event: Event, bot: Optional[Bot] = None):
         ...
 
 
-class CommandHandler(Protocol):
+class _CommandHandler(Protocol):
     def __call__(self, event: Event, bot: Optional[Bot] = None):
         ...
 
@@ -40,29 +40,35 @@ class CommandHandler(Protocol):
 class EventListener:
     """A function associated with an event type which triggers it."""
 
+    #: The type of event which triggers `func`.
     event: Type[Event] = attr.ib()
+
+    #: The callback triggered when an event of type `event` occurs. Passed the event instance
+    #: and a reference to the `Bot` which received the event.
     func: Callable[[Event, Bot], None] = attr.ib()
+
+
+CommandMap = DefaultDict[str, List[Command]]
+ListenerMap = DefaultDict[Type[Event], List[EventListener]]
 
 
 @attr.s
 class EventsHandler:
     """
-    An EventsHandler instance provides `listener()` and `command()` decorators, which
+    An EventsHandler instance provides `listener` and `command` decorators, which
     are used to register event listener and commands to the instance. This class is a
     base for both a bot and for a plugin.
     """
 
-    #: Name, used for logging
+    #: Name of the EventsHandler; used for logging. Subclasses may use the name for more.
     name: str = attr.ib()
 
-    #: Event listeners registered to the EventsHandler with @handler.listener()
-    _listeners: DefaultDict[Type[Event], List[EventListener]] = attr.ib(
-        defaultdict(list)
-    )
+    #: Event listeners registered to the EventsHandler with @handler.listener().
+    _listeners: ListenerMap = attr.ib(defaultdict(list))
 
-    #: Commands registered to the EventsHandler with @handler.command('command')
+    #: Commands registered to the EventsHandler with @handler.command('command').
     # TODO make str map to a single command
-    _commands: DefaultDict[str, List[Command]] = attr.ib(defaultdict(list))
+    _commands: CommandMap = attr.ib(defaultdict(list))
 
     def __attrs_post_init__(self):
         self._register_command_listener()
@@ -76,7 +82,15 @@ class EventsHandler:
                 command.func(event, bot)
 
     def get_commands(self, specified_command: str = "") -> List[Tuple[str, str]]:
-        """Return a list of commands and their docs registered to this EventsListener."""
+        """Return a list of commands and their docs registered to this EventsListener.
+        
+        Args:
+            specified_command: If present, only return info for this command.
+
+        Returns:
+
+
+        """
         names_and_docs = []
         for name, command in self._commands.items():
             if specified_command and name != specified_command:
@@ -90,31 +104,31 @@ class EventsHandler:
             listener.func(event, bot)
 
     def listener(self, event_type=None):
+        """Decorator for defining event listeners for an EventsHandler.
+        
+        An event listener is  a function which is called whenever a particular type of
+        event occurs. The argument is an instance of that event type. The type of event
+        the listener responds to can be specified by passing it to the listener, or
+        simply by annotating the event argument (preferred). Either method may be used,
+        but if the event type is specified using both methods at the same time, the
+        provided types must match.
+
+        Examples:
+            Using type hints to specify the events listened for:
+
+            >>> @plugin.listener()
+            >>> def handle_message(event: fbchat.MessageEvent):
+            >>>     print(event.message.text)
+
+            Passing an event type to the decorator to specify the events listened for:
+
+            >>> @plugin.listener(fbchat.MessageEvent)
+            >>> def handle_message(event):
+            >>>     print(event.message.text)
+
         """
-        Decorator for defining event listeners for a plugin. An event listener is
-        a function which is called whenever a particular type of event occurs.
-        The argument is an instance of that event type. The type of event the
-        listener responds to can be specified by passing it to the listener:
 
-        ```
-        @plugin.listener(fbchat.MessageEvent)
-        def handle_message(event):
-            print(event.message.text)
-        ```
-
-        or simply by annotating the event argument (preferred):
-
-        ```
-        @plugin.listener()
-        def handle_message(event: fbchat.MessageEvent):
-            print(event.message.text)
-        ```
-
-        Either method may be used, but if the event type is specified using both
-        methods at the same time, the provided types must match.
-        """
-
-        def decorator(func: ListenerHandler):
+        def decorator(func: _ListenerHandler):
             spec = inspect.getfullargspec(func)
             assert len(spec.args) >= 1, _listener_arity_error
             # Try to get the type annotation from the event argument
@@ -143,7 +157,39 @@ class EventsHandler:
         return decorator
 
     def command(self, cmd_name: str):
-        def decorator(func: CommandHandler):
+        """Decorator for defining commands for an `EventsHandler`.
+
+        Args:
+            cmd_name (str): The string used to invoke the command in a chat session.
+
+        Decorate a callback function to call it when a user issues a command to the bot.
+        The decorated function may take either 1 or 2 arguments; either just the
+        `core_events.CommandEvent` which triggered the callback, or the `core_events.CommandEvent` and a reference
+        to the `fbchatbot.types_util.Bot` which received the event. The docstring for the callback will
+        be used to provide the docs for the command, which are shown when the core
+        event `help_cmd` is invoked.
+
+        Examples:
+            Create an event which echos its argument: e.g.
+                User: .echo this string
+
+                Bot: this string
+
+            >>> @bot.command("echo")
+            >>> def echo(e: CommandEvent):
+            >>>     \"\"\"Echo provided string\"\"\"
+            >>>     e.thread.send_text(e.command_body)
+
+            Trigger an event in response to the command:
+
+            >>> @bot.command("trigger_event")
+            >>> def trigger_event(e: CommandEvent, b: Bot):
+            >>>     \"\"\"Trigger event\"\"\"
+            >>>     b.handle(MyEvent())
+
+        """
+
+        def decorator(func: _CommandHandler):
             spec = inspect.getfullargspec(func)
 
             # TODO add assertions?
