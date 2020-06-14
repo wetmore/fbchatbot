@@ -6,7 +6,7 @@ from fbchatbot.core_events import CommandEvent, TextMessageEvent
 bot = Chatbot(config=config)
 
 
-@bot.listener()
+@bot.listener
 def my_echo(e: TextMessageEvent):
     print(e.text)
 

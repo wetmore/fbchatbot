@@ -24,6 +24,9 @@ _mismatch_error = """
     Event type in listener decorator must match type annotation in decorated
     function.
 """
+_must_subclass_event_error = """
+    Event used in listener decorator must be a subclass of fbchat.Event
+"""
 
 
 class _ListenerHandler(Protocol):
@@ -63,20 +66,20 @@ class EventsHandler:
     #: Name of the EventsHandler; used for logging. Subclasses may use the name for more.
     name: str = attr.ib()
 
-    #: Event listeners registered to the EventsHandler with @handler.listener().
-    _listeners: ListenerMap = attr.ib(defaultdict(list))
+    #: Event listeners registered to the EventsHandler with @handler.listener.
+    _listeners: ListenerMap = attr.ib(factory=lambda: defaultdict(list))
 
     #: Commands registered to the EventsHandler with @handler.command('command').
     # TODO make str map to a single command
-    _commands: CommandMap = attr.ib(defaultdict(list))
+    _commands: CommandMap = attr.ib(factory=lambda: defaultdict(list))
 
     def __attrs_post_init__(self):
-        self._register_command_listener()
+        self._register_command_listener
 
     def _register_command_listener(self):
         """Register a listener to handle commands."""
 
-        @self.listener()
+        @self.listener
         def handle_command(event: CommandEvent, bot: Bot):
             for command in self._commands[event.command]:
                 command.func(event, bot)
@@ -103,7 +106,7 @@ class EventsHandler:
         for listener in self._listeners[type(event)]:
             listener.func(event, bot)
 
-    def listener(self, event_type=None):
+    def listener(self, arg):
         """Decorator for defining event listeners for an EventsHandler.
         
         An event listener is  a function which is called whenever a particular type of
@@ -116,7 +119,7 @@ class EventsHandler:
         Examples:
             Using type hints to specify the events listened for:
 
-            >>> @plugin.listener()
+            >>> @plugin.listener
             >>> def handle_message(event: fbchat.MessageEvent):
             >>>     print(event.message.text)
 
@@ -127,6 +130,14 @@ class EventsHandler:
             >>>     print(event.message.text)
 
         """
+
+        event_type = None
+        event_in_decorator = False
+        if inspect.isclass(arg):
+            assert issubclass(arg, Event), _must_subclass_event_error
+            # The argument is the event
+            event_in_decorator = True
+            event_type = arg
 
         def decorator(func: _ListenerHandler):
             spec = inspect.getfullargspec(func)
@@ -151,10 +162,15 @@ class EventsHandler:
             self._listeners[_event_type].append(event_listener)
 
             logging.info(f"Registered {event_listener} on {self.name}")
+            # TODO Remove this printf, which is being used while developing the chat logging module
+            print(f"Registered {event_listener} on {self.name}")
 
             return func  # TODO should i return something else?
 
-        return decorator
+        if event_in_decorator:
+            return decorator
+        else:
+            return decorator(arg)
 
     def command(self, cmd_name: str):
         """Decorator for defining commands for an `EventsHandler`.

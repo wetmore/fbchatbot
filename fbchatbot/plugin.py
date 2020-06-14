@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Any, Callable, Optional
 
 import attr
 
@@ -13,3 +13,5 @@ class Plugin(EventsHandler):
 
     #: Name used to refer to the plugin, e.g. when writing config.py for a bot.
     name: str = attr.ib(kw_only=True)
+
+    on_load: Optional[Callable[[Any, Any], None]] = attr.ib(default=None)

@@ -23,6 +23,8 @@ class Chatbot(EventsHandler):
     # TODO...
     queue = attr.ib(default=None)
 
+    db = attr.ib(default=None)
+
     plugins: List[Plugin] = attr.ib([])
 
     def __attrs_post_init__(self):
@@ -30,16 +32,19 @@ class Chatbot(EventsHandler):
         #  self.load_plugin(base_plugin)
         # Configure logging
         log_level = self.config.LOG_LEVEL or logging.WARNING
+        print(f"Using log level {log_level}")
         logging.basicConfig(level=log_level)
         # Register core event listeners and commands
         super().__attrs_post_init__()  # This sets up the command listener
         for listener in core_listeners:
-            self.listener()(listener)
+            self.listener(listener)
         for name, handler in core_commands.items():
             self.command(name)(handler)
 
     def load_plugin(self, plugin: Plugin):
         """Load a plugin."""
+        if plugin.on_load:
+            plugin.on_load(plugin, self)
         self.plugins.append(plugin)
 
     def handle(self, event):
