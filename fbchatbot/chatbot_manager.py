@@ -1,6 +1,6 @@
 import atexit
 import logging
-from typing import Set, Optional, Dict, TypeVar
+from typing import Any, Set, Optional, Dict, TypeVar
 
 import attr
 import fbchat
