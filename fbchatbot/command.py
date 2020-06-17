@@ -20,4 +20,5 @@ class Command:
     func: Callable[[CommandEvent, Bot], None] = attr.ib()
 
     def pretty(self):
+        """Pretty print command, for info-level logging."""
         return f"{Colors.blue(self.command)} ⟶  {Colors.green(self.func.__name__)}"

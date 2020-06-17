@@ -53,6 +53,7 @@ class EventListener:
     func: Callable[[Event, Bot], None] = attr.ib()
 
     def pretty(self):
+        """Pretty print event handler, for info-level logging."""
         return (
             f"{Colors.blue(self.event.__name__)} ⟶  {Colors.green(self.func.__name__)}"
         )
@@ -66,8 +67,7 @@ ListenerMap = DefaultDict[Type[Event], List[EventListener]]
 class EventsHandler:
     """
     An EventsHandler instance provides `listener` and `command` decorators, which
-    are used to register event listener and commands to the instance. This class is a
-    base for both a bot and for a plugin.
+    are used to register event listener and commands to the instance.
     """
 
     #: Name of the EventsHandler; used for logging.
@@ -168,6 +168,7 @@ class EventsHandler:
                 f"Registered EventListener {event_listener.pretty()} on {Colors.yellow(self.name)}"
             )
             logger.debug(event_listener)
+
             # TODO Remove this printf, which is being used while developing the chat
             # logging module.
             # print(f"Registered EventListener {event_listener.pretty()} on {self.name}")
