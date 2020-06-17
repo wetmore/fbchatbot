@@ -5,6 +5,7 @@ from fbchat import MessageData
 
 from .types_util import Bot
 from .core_events import CommandEvent
+from .util import Colors
 
 
 @attr.s
@@ -17,3 +18,6 @@ class Command:
 
     #: Function invoked when command is called.
     func: Callable[[CommandEvent, Bot], None] = attr.ib()
+
+    def pretty(self):
+        return f"{Colors.blue(self.command)} ⟶  {Colors.green(self.func.__name__)}"

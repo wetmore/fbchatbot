@@ -10,7 +10,9 @@ from fbchat import Event
 from .command import Command
 from .core_events import CommandEvent
 from .types_util import Bot
+from .util import Colors
 
+logger = logging.getLogger(__name__)
 
 _listener_arity_error = """
     Event listener must have at least one argument. The first argument
@@ -49,6 +51,11 @@ class EventListener:
     #: The callback triggered when an event of type `event` occurs. Passed the event
     # instance and a reference to the `Bot` which received the event.
     func: Callable[[Event, Bot], None] = attr.ib()
+
+    def pretty(self):
+        return (
+            f"{Colors.blue(self.event.__name__)} ⟶  {Colors.green(self.func.__name__)}"
+        )
 
 
 CommandMap = DefaultDict[str, List[Command]]
@@ -157,11 +164,13 @@ class EventsHandler:
             event_listener = EventListener(event=_event_type, func=handler)
 
             self._listeners[_event_type].append(event_listener)
-
-            logging.info(f"Registered {event_listener} on {self.name}")
+            logger.info(
+                f"Registered EventListener {event_listener.pretty()} on {Colors.yellow(self.name)}"
+            )
+            logger.debug(event_listener)
             # TODO Remove this printf, which is being used while developing the chat
             # logging module.
-            print(f"Registered {event_listener} on {self.name}")
+            # print(f"Registered EventListener {event_listener.pretty()} on {self.name}")
 
             return func  # TODO should i return something else?
 
@@ -220,7 +229,10 @@ class EventsHandler:
 
             self._commands[cmd_name].append(command)
 
-            logging.info(f"Registered {command} on {self.name}")
+            logger.info(
+                f"Registered Command {command.pretty()} on {Colors.yellow(self.name)}"
+            )
+            logger.debug(command)
 
             return func
 
