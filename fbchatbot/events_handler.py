@@ -74,7 +74,7 @@ class EventsHandler:
     _commands: CommandMap = attr.ib(factory=lambda: defaultdict(list))
 
     def __attrs_post_init__(self):
-        self._register_command_listener
+        self._register_command_listener()
 
     def _register_command_listener(self):
         """Register a listener to handle commands."""
