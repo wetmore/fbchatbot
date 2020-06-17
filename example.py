@@ -1,10 +1,10 @@
 import config
-from fbchatbot import ChatbotManager
+from fbchatbot import *
 from fbchatbot.core_events import CommandEvent, TextMessageEvent
 
 
-bots = ChatbotManager(config=config)
-bot = bots.add_bot("bot1")
+use_config(config)
+bot = add_bot("bot1").claim_threads(config.THREADS["my_thread"])
 
 
 @bot.listener

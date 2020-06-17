@@ -32,16 +32,20 @@ class Chatbot(EventsHandler):
         for name, handler in core_commands.items():
             self.command(name)(handler)
 
-    def claim_threads(self, *threads):
+    def claim_threads(self, *threads) -> "Chatbot":
         """Assign this bot to chat threads."""
         for thread_id in threads:
             self.manager.assign_thread(thread_id, self)
 
-    def load_plugin(self, plugin: Plugin):
+        return self
+
+    def load_plugin(self, plugin: Plugin) -> "Chatbot":
         """Load a plugin."""
         if plugin.on_load:
             plugin.on_load(plugin, self)
         self.plugins.append(plugin)
+
+        return self
 
     def handle(self, event):
         """Handle an event"""

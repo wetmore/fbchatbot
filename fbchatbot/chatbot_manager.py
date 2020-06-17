@@ -10,9 +10,9 @@ from .util import get_session, save_session
 from .chatbot import Chatbot
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, kw_only=True)
 class ChatbotManager:
-    config = attr.ib(kw_only=True)
+    config = attr.ib(default=None)
 
     # TODO...
     queue = attr.ib(default=None)
@@ -25,9 +25,17 @@ class ChatbotManager:
 
     def __attrs_post_init__(self):
         # Configure logging
+        if self.config is not None:
+            self._configure_logging()
+
+    def _configure_logging(self):
         log_level = getattr(self.config, "LOG_LEVEL", None) or logging.WARNING
         print(f"Using log level {log_level}")
         logging.basicConfig(level=log_level)
+
+    def use_config(self, config):
+        self.config = config
+        self._configure_logging()
 
     def add_bot(self, name, config=None, db=None) -> Chatbot:
         """Create a bot which is managed by this ChatbotManager
@@ -77,7 +85,7 @@ class ChatbotManager:
         print("Listening...")
         for event in chat_listener.listen():
             if isinstance(event, fbchat.ThreadEvent):
-                b = self.thread_map.get(event.thread, fallback_bot)
+                b = self.thread_map.get(event.thread.id, fallback_bot)
                 if b:
                     bots_for_event &= set([b])
                 else:

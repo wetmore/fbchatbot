@@ -73,9 +73,9 @@ def test_start(monkeypatch):
     # Create 3 mock events
     e1 = Mock(spec=Event)
     e2 = Mock(spec=ThreadEvent)
-    e2.thread = "123"
+    e2.thread.id = "123"
     e3 = Mock(spec=ThreadEvent)
-    e3.thread = "456"
+    e3.thread.id = "456"
 
     with patch("fbchat.Listener") as mock:
         instance = mock.return_value
@@ -115,9 +115,9 @@ def test_start_specific_bot(monkeypatch):
     # Create 3 mock events
     e1 = Mock(spec=Event)
     e2 = Mock(spec=ThreadEvent)
-    e2.thread = "123"
+    e2.thread.id = "123"
     e3 = Mock(spec=ThreadEvent)
-    e3.thread = "456"
+    e3.thread.id = "456"
 
     with patch("fbchat.Listener") as mock:
         instance = mock.return_value
@@ -156,11 +156,11 @@ def test_start_one_unassigned(monkeypatch):
     # Create 4 mock events
     e1 = Mock(spec=Event)
     e2 = Mock(spec=ThreadEvent)
-    e2.thread = "123"
+    e2.thread.id = "123"
     e3 = Mock(spec=ThreadEvent)
-    e3.thread = "456"
+    e3.thread.id = "456"
     e4 = Mock(spec=ThreadEvent)
-    e4.thread = "789"
+    e4.thread.id = "789"
 
     with patch("fbchat.Listener") as mock:
         instance = mock.return_value
