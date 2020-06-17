@@ -37,18 +37,16 @@ class ChatbotManager:
         self.config = config
         self._configure_logging()
 
-    def add_bot(self, name, config=None, db=None) -> Chatbot:
+    def add_bot(self, name, db=None) -> Chatbot:
         """Create a bot which is managed by this ChatbotManager
 
         Args:
             name (str): The name of the bot.
-            config (Optional[Any]): Config. Uses the ChatManager's config by default
             db (Optional[peewee.Database]): Database for the bot to use. Uses the ChatManager's
                 database by default.
         """
-        _config = self.config if config is None else config
         _db = self.db if db is None else db
-        bot = Chatbot(manager=self, name=name, config=_config, db=_db)
+        bot = Chatbot.create(name=name, manager=self, db=_db)
         self.bots.add(bot)
 
         return bot

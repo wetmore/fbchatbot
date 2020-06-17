@@ -22,11 +22,9 @@ def test_add_bot():
     bot1 = manager.add_bot("bot1")
     assert len(manager.bots) == 1
     assert bot1 in manager.bots
-    assert bot1.config is config
 
-    bot2 = manager.add_bot("bot2", config={})
+    bot2 = manager.add_bot("bot2")
     assert len(manager.bots) == 2
-    assert bot2.config is not config
 
 
 def test_assign_thread():
