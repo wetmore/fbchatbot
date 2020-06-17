@@ -1,6 +1,6 @@
 import atexit
 import logging
-from typing import List, Optional, TYPE_CHECKING
+from typing import List
 from datetime import datetime
 
 import attr

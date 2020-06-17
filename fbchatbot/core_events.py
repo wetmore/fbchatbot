@@ -1,8 +1,11 @@
-"""
-Events core to 
+"""Events core to the operation of Chatbots.
+
+This module contains events which make working with `fbchat` easier for the purposes of
+writing a chatbot, as well as events which power the command-handling functionality
+of `fbchatbot`.
 """
 
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional
 import re
 
 import attr
@@ -82,9 +85,10 @@ class MentionEvent(MessageEvent):
 @attr.s(slots=True, kw_only=True, frozen=True)
 class CommandEvent(MessageEvent):
     """
-    Represents a command to the bot. Commands can be issued by referencing the bot in the beginning of the message,
-    or just by starting the message with a period (which can be typed using a phone keyboard without needing to
-    tap into the symbols keyboard).
+    Represents a command to the bot. Commands can be issued by referencing the bot in
+    the beginning of the message, or just by starting the message with a period (which
+    can be typed using a phone keyboard without needing to tap into the symbols
+    keyboard).
     """
 
     #: The command string
@@ -99,7 +103,8 @@ def parse_event_from_message(
 ) -> MessageEvent:
     message: fbchat.MessageData = event.message
     if message.text:
-        # TODO: create EmojiMessage, but that's somewhat complicated (see https://stackoverflow.com/a/39425959/1055926)
+        # TODO: create EmojiMessage, but that's somewhat complicated
+        # (see https://stackoverflow.com/a/39425959/1055926)
         # might be able to leverege emojis package
         return TextMessageEvent(  # type: ignore
             author=event.author,
@@ -157,7 +162,8 @@ def _fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
                     message=event.message,
                     at=event.message.created_at,
                 ),
-                reply=event.replied_to,  # BUG this doesn't seem to be populated when you reply to yourself
+                # BUG this doesn't seem to be populated when you reply to yourself
+                reply=event.replied_to,
             )
         )
 

@@ -46,8 +46,8 @@ class EventListener:
     #: The type of event which triggers `func`.
     event: Type[Event] = attr.ib()
 
-    #: The callback triggered when an event of type `event` occurs. Passed the event instance
-    #: and a reference to the `Bot` which received the event.
+    #: The callback triggered when an event of type `event` occurs. Passed the event
+    # instance and a reference to the `Bot` which received the event.
     func: Callable[[Event, Bot], None] = attr.ib()
 
 
@@ -55,7 +55,7 @@ CommandMap = DefaultDict[str, List[Command]]
 ListenerMap = DefaultDict[Type[Event], List[EventListener]]
 
 
-@attr.s
+@attr.s(eq=False)
 class EventsHandler:
     """
     An EventsHandler instance provides `listener` and `command` decorators, which
@@ -63,7 +63,7 @@ class EventsHandler:
     base for both a bot and for a plugin.
     """
 
-    #: Name of the EventsHandler; used for logging. Subclasses may use the name for more.
+    #: Name of the EventsHandler; used for logging.
     name: str = attr.ib()
 
     #: Event listeners registered to the EventsHandler with @handler.listener.
@@ -146,12 +146,12 @@ class EventsHandler:
             ann = spec.annotations.get(spec.args[0], None)
 
             _event_type = event_type
-            if _event_type == None:
+            if _event_type is None:
                 _event_type = ann
-            elif ann != None:
+            elif ann is not None:
                 assert ann == _event_type, _mismatch_error
 
-            assert _event_type != None, _no_event_type_error
+            assert _event_type is not None, _no_event_type_error
 
             @wraps(func)
             def handler(event: Event, bot: Bot):
@@ -162,7 +162,8 @@ class EventsHandler:
             self._listeners[_event_type].append(event_listener)
 
             logging.info(f"Registered {event_listener} on {self.name}")
-            # TODO Remove this printf, which is being used while developing the chat logging module
+            # TODO Remove this printf, which is being used while developing the chat
+            # logging module.
             print(f"Registered {event_listener} on {self.name}")
 
             return func  # TODO should i return something else?
@@ -180,10 +181,11 @@ class EventsHandler:
 
         Decorate a callback function to call it when a user issues a command to the bot.
         The decorated function may take either 1 or 2 arguments; either just the
-        `core_events.CommandEvent` which triggered the callback, or the `core_events.CommandEvent` and a reference
-        to the `fbchatbot.types_util.Bot` which received the event. The docstring for the callback will
-        be used to provide the docs for the command, which are shown when the core
-        event `help_cmd` is invoked.
+        `core_events.CommandEvent` which triggered the callback, or the
+        `core_events.CommandEvent` and a reference to the `fbchatbot.types_util.Bot`
+        which received the event. The docstring for the callback will be used to provide
+        the docs for the command, which are shown when the core event `help_cmd` is
+        invoked.
 
         Examples:
             Create an event which echos its argument: e.g.

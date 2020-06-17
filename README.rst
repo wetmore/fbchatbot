@@ -18,7 +18,7 @@ Example:
     bot = Chatbot(config=config)
 
 
-    @bot.listener()
+    @bot.listener
     def my_echo(e: MessageEvent):
         print("bot heard: " + e.message.text)
 
@@ -46,7 +46,7 @@ Use type hints to specify what events to listen for:
 
 .. code-block:: python
 
-    @bot.listener()
+    @bot.listener
     def my_echo(e: MessageEvent):
         print("bot: " + e.message.text)
         
@@ -86,7 +86,7 @@ Plugin example
 
     my_plugin = Plugin("MyPlugin")
     
-    @my_plugin.listener()
+    @my_plugin.listener
     def my_echo(e: MessageEvent):
         print("bot: " + e.message.text)
 

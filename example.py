@@ -1,9 +1,10 @@
 import config
-from fbchatbot import Chatbot
+from fbchatbot import ChatbotManager
 from fbchatbot.core_events import CommandEvent, TextMessageEvent
 
 
-bot = Chatbot(config=config)
+bots = ChatbotManager(config=config)
+bot = bots.add_bot("bot1")
 
 
 @bot.listener
