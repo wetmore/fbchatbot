@@ -1,7 +1,6 @@
 import config
 from fbchatbot import *
 from fbchatbot.core_events import CommandEvent, TextMessageEvent
-from fbchatbot.command import command
 
 
 class TestPlugin(Plugin):
@@ -20,9 +19,9 @@ class TestPlugin(Plugin):
 
 
 use_config(config)
-bot = (
-    add_bot("bot1").claim_threads(config.THREADS["my_thread"]).load_plugin(TestPlugin())
-)
+bot = add_bot("bot1")
+bot.claim_threads(config.THREADS["my_thread"])
+bot.load_plugin(TestPlugin())
 
 
 @bot.listener

@@ -60,7 +60,10 @@ class ChatbotManager:
         self.thread_map[thread_id] = bot
 
     def start(self, bot: Optional[Chatbot] = None):
-        """Log in to facebook messenger and start listening for and handling events."""
+        """Log in to facebook messenger and start listening for and handling events.
+        
+        This is a blocking method.
+        """
         session, status = get_session(self.config)
         atexit.register(lambda: save_session(session))
         print(f"{status}, user {session.user.id}")

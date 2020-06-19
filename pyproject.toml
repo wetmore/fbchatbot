@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fbchatbot"
-version = "0.1.0"
+version = "0.2.0"
 description = "Easily define chatbots for Facebook Messenger"
 authors = ["Matthew Wetmore <wetmore.matt@gmail.com>"]
 readme = "README.rst"

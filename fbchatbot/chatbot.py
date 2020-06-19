@@ -188,5 +188,8 @@ class Chatbot:
         return self
 
     def start(self):
-        """Log into messenger and start listening to events for this bot."""
+        """Log into messenger and start listening to events for this bot.
+        
+        This is a blocking method.
+        """
         self.manager.start(self)
