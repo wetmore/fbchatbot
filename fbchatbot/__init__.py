@@ -4,6 +4,7 @@
 from .chatbot_manager import ChatbotManager
 from .event_listener import listener
 from .command import command
+from .types_util import Bot
 
 #: Expose the Plugin class, used to define bot plugins
 from .plugin import Plugin
@@ -19,6 +20,7 @@ start = default_manager.start
 __version__ = "0.2.0"
 __all__ = [
     "Plugin",
+    "Bot",
     "use_config",
     "add_bot",
     "assign_thread",
