@@ -9,3 +9,6 @@ class Bot(Protocol):
 
     def get_all_commands(self, specified_command: str = ""):
         ...
+
+    def get_client(self):
+        ...

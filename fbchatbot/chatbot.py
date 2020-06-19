@@ -14,6 +14,7 @@ import logging
 import inspect
 
 import attr
+from fbchat import Client
 
 # from .base_plugin import base_plugin
 from .event_listener import listener, EventListener
@@ -52,6 +53,8 @@ class Chatbot:
     commands: CommandMap = attr.ib(factory=lambda: defaultdict(list))
 
     has_loaded: bool = attr.ib(False)
+
+    client: Optional[Client] = attr.ib(None)
 
     @classmethod
     def create(
@@ -122,6 +125,14 @@ class Chatbot:
         print(event)
         for listener, _ in self.listeners[type(event)]:
             listener.execute(event, self)
+
+    # TODO make property?
+    def get_client(self) -> Client:
+        """Return a client, used to interact with facebook."""
+        assert (
+            self.client is not None
+        ), "Cannot call get_client until bot has started listening."
+        return self.client  # type: ignore
 
     def listener(self, arg):
         """Convenience decorator for creating a listener and adding it to the bot."""

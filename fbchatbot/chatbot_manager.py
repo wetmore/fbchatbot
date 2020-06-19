@@ -82,6 +82,10 @@ class ChatbotManager:
         available_bots = set([bot]) if bot else self.bots
         bots_for_event = available_bots.copy()
 
+        client = fbchat.Client(session=session)  # type: ignore
+        for bot in available_bots:
+            bot.client = client
+
         # Listener event loop
         print("Listening...")
         for event in chat_listener.listen():
