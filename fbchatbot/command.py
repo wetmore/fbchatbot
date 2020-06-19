@@ -1,16 +1,17 @@
-from typing import Optional, Protocol
+from typing import Any, Optional, Protocol
 import inspect
 from types import MethodType
 
 import attr
-from fbchat import Event
 
+from .core_events import CommandEvent
 from .types_util import Bot
 from .util import Colors
 
-
+# TODO this is technically not complete, as a Command may wrap an unbound method,
+# when the @listener decorator is used above a method definition.
 class CommandHandler(Protocol):
-    def __call__(self, event: Event, bot: Optional[Bot] = None):
+    def __call__(self, event: CommandEvent, bot: Optional[Bot] = None):
         ...
 
 
@@ -28,7 +29,7 @@ class Command:
     def bind(self, obj):
         self.func = MethodType(self.func, obj)
 
-    def execute(self, event: Event, bot: Bot):
+    def execute(self, event: Any, bot: Bot):
         spec = inspect.getfullargspec(self.func)
         if type(self.func) == MethodType:
             needs_bot_arg = len(spec.args) == 3

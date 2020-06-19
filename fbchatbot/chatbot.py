@@ -14,7 +14,6 @@ import logging
 import inspect
 
 import attr
-from fbchat import Event
 
 # from .base_plugin import base_plugin
 from .event_listener import listener, EventListener
@@ -34,7 +33,7 @@ logger = logging.getLogger("fbchatbot")
 CommandName = str
 Source = str
 CommandMap = DefaultDict[CommandName, List[Tuple[Command, Source]]]
-ListenerMap = DefaultDict[Type[Event], List[Tuple[EventListener, Source]]]
+ListenerMap = DefaultDict[Type[Any], List[Tuple[EventListener, Source]]]
 
 
 @attr.s(eq=False)
@@ -117,7 +116,7 @@ class Chatbot:
             names_and_docs.append((name, command.docs))
         return names_and_docs
 
-    def handle(self, event: Event):
+    def handle(self, event: Any):
         """Call every registered listener for a provided event."""
         print(f"{datetime.now().strftime('%b %d %Y %H:%M:%S')} [{self.name}]")
         print(event)
@@ -171,6 +170,9 @@ class Chatbot:
         method_listeners = []
         method_commands = []
         for attrib in dir(plugin):
+            # TODO I guess it's more pythonic to get rid of the isinstance branching,
+            # add them all to one list, and then determine if they are a command or a
+            # listener by checking presence of 'event' vs 'command' attrs?
             if isinstance(getattr(plugin, attrib), EventListener):
                 method_listener = getattr(plugin, attrib)
                 method_listener.bind(plugin)

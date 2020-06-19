@@ -13,6 +13,7 @@ class Plugin(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
+        # TODO Should I just use `type(plugin_instance).__name__` instead of this?
         raise NotImplementedError
 
     @property

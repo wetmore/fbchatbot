@@ -1,16 +1,16 @@
 import inspect
-from typing import Optional, Protocol, Type
+from typing import Any, Optional, Protocol, Type
 from types import MethodType
 
 import attr
-from fbchat import Event
 
 from .types_util import Bot
 from .util import Colors
 
-
+# TODO this is technically not complete, as a EventListener may wrap an unbound method,
+# when the @listener decorator is used above a method definition.
 class ListenerHandler(Protocol):
-    def __call__(self, event: Event, bot: Optional[Bot] = None):
+    def __call__(self, event: Any, bot: Optional[Bot] = None):
         ...
 
 
@@ -19,7 +19,7 @@ class EventListener:
     """A function associated with an event type which triggers it."""
 
     #: The type of event which triggers `func`.
-    event: Type[Event] = attr.ib()
+    event: Type[Any] = attr.ib()
 
     #: The callback triggered when an event of type `event` occurs. Passed the event
     # instance and a reference to the `Bot` which received the event.
@@ -28,7 +28,7 @@ class EventListener:
     def bind(self, obj):
         self.func = MethodType(self.func, obj)
 
-    def execute(self, event: Event, bot: Bot):
+    def execute(self, event: Any, bot: Bot):
         spec = inspect.getfullargspec(self.func)
         if type(self.func) == MethodType:
             needs_bot_arg = len(spec.args) == 3
@@ -54,9 +54,6 @@ _no_event_type_error = """
 _mismatch_error = """
     Event type in listener decorator must match type annotation in decorated
     function.
-"""
-_must_subclass_event_error = """
-    Event used in listener decorator must be a subclass of fbchat.Event
 """
 
 
@@ -85,15 +82,16 @@ def listener(arg):
 
     """
 
+    # This logic supports the ability to call the listener decorator with or without an
+    # event type argument.
     event_type = None
     event_in_decorator = False
-    if inspect.isclass(arg):
-        assert issubclass(arg, Event), _must_subclass_event_error
+    if inspect.isclass(arg):  # i.e. isinstance(arg, type)
         # The argument is the event
         event_in_decorator = True
         event_type = arg
 
-    def decorator(func: ListenerHandler):
+    def decorator(func: ListenerHandler) -> EventListener:
         spec = inspect.getfullargspec(func)
         assert len(spec.args) >= 1, _listener_arity_error
         # Try to get the type annotation from the event argument
