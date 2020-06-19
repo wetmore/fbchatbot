@@ -19,13 +19,15 @@ from .types_util import Bot
 @attr.s(slots=True, kw_only=True, frozen=True)
 class MessageEvent(fbchat.MessageEvent):
     """
-    Represents a message event sent by someone that isn't the bot. Also merges
-    fbchat.MessageEvent and fbchat.MessageReplyEvent, so that if a message is a reply it
-    will still trigger event handlers listening to MessageEvents.
+    Merges fbchat.MessageEvent and fbchat.MessageReplyEvent, so that if a message is a
+    reply it will still trigger event handlers listening to MessageEvents.
     """
 
     # TODO a few of the events which inherit don't pass this through
     replied_to: Optional[fbchat.MessageData] = attr.ib(None)
+
+    #: True if the message was sent by the bot.
+    sent_by_bot: bool = attr.ib()
 
 
 @attr.s(slots=True, kw_only=True, frozen=True)
@@ -44,6 +46,7 @@ class ImageMessageEvent(MessageEvent):
     image_attachments: List[fbchat.ImageAttachment] = attr.ib()
 
 
+# TODO: Currently this is never actually spawned
 @attr.s(slots=True, kw_only=True, frozen=True)
 class EmojiMessageEvent(MessageEvent):
     """Represents a message which is only an emoji. May have a size"""
@@ -115,6 +118,8 @@ def parse_event_from_message(
     event: fbchat.MessageEvent, reply: Optional[fbchat.MessageData] = None
 ) -> MessageEvent:
     message: fbchat.MessageData = event.message
+    bot_id = event.thread.session.user.id
+    is_from_bot = event.author.id == bot_id
     if message.text:
         # TODO: create EmojiMessage, but that's somewhat complicated
         # (see https://stackoverflow.com/a/39425959/1055926)
@@ -126,6 +131,7 @@ def parse_event_from_message(
             at=event.at,
             replied_to=reply,
             text=event.message.text,
+            sent_by_bot=is_from_bot,
         )
     if message.sticker:
         return StickerMessageEvent(  # type: ignore
@@ -135,6 +141,7 @@ def parse_event_from_message(
             at=event.at,
             replied_to=reply,
             sticker=message.sticker,
+            sent_by_bot=is_from_bot,
         )
     images = []
     for attachment in message.attachments:
@@ -148,6 +155,7 @@ def parse_event_from_message(
             at=event.at,
             replied_to=reply,
             image_attachments=images,
+            sent_by_bot=is_from_bot,
         )
     return OtherMessageEvent(  # type: ignore
         author=event.author,
@@ -155,6 +163,7 @@ def parse_event_from_message(
         message=event.message,
         at=event.at,
         replied_to=reply,
+        sent_by_bot=is_from_bot,
     )
 
 
@@ -174,27 +183,23 @@ def _fbReaction_to_reaction(event: fbchat.ReactionEvent, bot: Bot):
 
 @listener
 def _fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
-    bot_id = event.thread.session.user.id
-    if event.author.id != bot_id:
-        bot.handle(parse_event_from_message(event))
+    bot.handle(parse_event_from_message(event))
 
 
 @listener
 def _fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
-    bot_id = event.thread.session.user.id
-    if event.author.id != bot_id:
-        bot.handle(
-            parse_event_from_message(
-                fbchat.MessageEvent(  # type: ignore
-                    author=event.author,
-                    thread=event.thread,
-                    message=event.message,
-                    at=event.message.created_at,
-                ),
-                # BUG this doesn't seem to be populated when you reply to yourself
-                reply=event.replied_to,
-            )
+    bot.handle(
+        parse_event_from_message(
+            fbchat.MessageEvent(  # type: ignore
+                author=event.author,
+                thread=event.thread,
+                message=event.message,
+                at=event.message.created_at,
+            ),
+            # BUG this doesn't seem to be populated when you reply to yourself
+            reply=event.replied_to,
         )
+    )
 
 
 @listener
@@ -219,6 +224,9 @@ cmd_regex_dot = re.compile("^\.(\S+)(.*)")
 
 @listener
 def _mention_to_command(event: MentionEvent, bot: Bot):
+    # Don't allow commands to be triggered by the bot itself.
+    if event.sent_by_bot:
+        return
     if event.mention.offset == 0:
         match = cmd_regex.match(event.message.text[event.mention.length :].strip())
         if match:
@@ -237,7 +245,7 @@ def _mention_to_command(event: MentionEvent, bot: Bot):
 
 @listener
 def _message_to_command(event: TextMessageEvent, bot: Bot):
-    match = cmd_regex_dot.match(event.message.text)
+    match = cmd_regex_dot.match(event.text)
     if match:
         command, body = match.groups()
         bot.handle(
@@ -248,6 +256,8 @@ def _message_to_command(event: TextMessageEvent, bot: Bot):
                 at=event.at,
                 command=command,
                 command_body=body.strip(),
+                sent_by_bot=False,
+                replied_to=event.replied_to,
             )
         )
 
