@@ -7,6 +7,7 @@ of `fbchatbot`.
 
 from typing import List, Optional
 import re
+from datetime import datetime
 
 import attr
 import fbchat
@@ -99,6 +100,17 @@ class CommandEvent(MessageEvent):
     command_body: str = attr.ib()
 
 
+@attr.s(slots=True, kw_only=True, frozen=True)
+class ReactionEvent(fbchat.ReactionEvent):
+    """Represents a reaction to a message.
+
+    Same as fbchat.ReactionEvent, but with added `at` attribute.
+    """
+
+    #: When the reaction was recorded
+    at: datetime = attr.ib()
+
+
 def parse_event_from_message(
     event: fbchat.MessageEvent, reply: Optional[fbchat.MessageData] = None
 ) -> MessageEvent:
@@ -147,6 +159,20 @@ def parse_event_from_message(
 
 
 @listener
+def _fbReaction_to_reaction(event: fbchat.ReactionEvent, bot: Bot):
+    at = datetime.utcnow()
+    bot.handle(
+        ReactionEvent(  # type: ignore
+            author=event.author,
+            thread=event.thread,
+            message=event.message,
+            reaction=event.reaction,
+            at=at,
+        )
+    )
+
+
+@listener
 def _fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     if event.author.id != bot_id:
@@ -187,8 +213,8 @@ def _message_to_mention(event: TextMessageEvent, bot: Bot):
             )
 
 
-cmd_regex = re.compile("^(\w+)(.*)")
-cmd_regex_dot = re.compile("^\.(\w+)(.*)")
+cmd_regex = re.compile("^(\S+)(.*)")
+cmd_regex_dot = re.compile("^\.(\S+)(.*)")
 
 
 @listener
@@ -229,6 +255,7 @@ def _message_to_command(event: TextMessageEvent, bot: Bot):
 core_listeners: List[EventListener] = [
     _fbMessage_to_message,
     _fbMessageReply_to_message,
+    _fbReaction_to_reaction,
     _message_to_mention,
     _mention_to_command,
     _message_to_command,
