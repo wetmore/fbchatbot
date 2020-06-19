@@ -1,16 +1,40 @@
-from typing import Any, List, Optional, Tuple, TYPE_CHECKING
+from typing import (
+    Any,
+    Optional,
+    DefaultDict,
+    Type,
+    List,
+    Tuple,
+    Iterable,
+    TYPE_CHECKING,
+)
 from datetime import datetime
+from collections import defaultdict
+import logging
+import inspect
 
 import attr
+from fbchat import Event
 
 # from .base_plugin import base_plugin
-from .events_handler import EventsHandler
-from .core_events import core_listeners
+from .event_listener import listener, EventListener
+from .command import command, Command
+from .core_events import core_listeners, CommandEvent
 from .core_commands import core_commands
 from .plugin import Plugin
+from .types_util import Bot
+from .util import Colors
 
 if TYPE_CHECKING:
     from .chatbot_manager import ChatbotManager
+
+logger = logging.getLogger("fbchatbot")
+
+# Type synonyms
+CommandName = str
+Source = str
+CommandMap = DefaultDict[CommandName, List[Tuple[Command, Source]]]
+ListenerMap = DefaultDict[Type[Event], List[Tuple[EventListener, Source]]]
 
 
 @attr.s(eq=False)
@@ -19,34 +43,116 @@ class Chatbot:
 
     manager: "ChatbotManager" = attr.ib(kw_only=True)
 
-    events_handler: EventsHandler = attr.ib(kw_only=True)
-
     # TODO start as none instead of making optional arg?
     db: Optional[Any] = attr.ib(kw_only=True, default=None)
 
     plugins: List[Plugin] = attr.ib(factory=list)
+
+    listeners: ListenerMap = attr.ib(factory=lambda: defaultdict(list))
+
+    commands: CommandMap = attr.ib(factory=lambda: defaultdict(list))
+
+    has_loaded: bool = attr.ib(False)
 
     @classmethod
     def create(
         cls, name: str, manager: "ChatbotManager", db: Optional[Any]
     ) -> "Chatbot":
         """Create a new Chatbot."""
-        events_handler = EventsHandler(f"{name} handler")
+        chatbot = cls(name=name, manager=manager, db=db)
 
         # Register core event listeners and commands
-        events_handler.register_command_listener()
-        for listener in core_listeners:
-            events_handler.listener(listener)
-        for cmd_name, handler in core_commands.items():
-            events_handler.command(cmd_name)(handler)
+        @listener
+        def handle_command(event: CommandEvent, bot: Bot):
+            for command, _ in chatbot.commands[event.command]:
+                command.execute(event, bot)
 
-        return cls(name=name, manager=manager, events_handler=events_handler, db=db)
+        chatbot.add_listener(handle_command, "core")
+        chatbot.add_listeners(core_listeners, "core")
+        chatbot.add_commands(core_commands, "core")
+
+        return chatbot
+
+    def add_command(self, command: Command, source: Source):
+        self.commands[command.name].append((command, source))
+        logger.info(
+            f"Registered Command {command.pretty()} on {Colors.yellow(self.name)} from {Colors.yellow(source)}"
+        )
+        logger.debug(command)
+
+    def add_listener(self, listener: EventListener, source: Source):
+        self.listeners[listener.event].append((listener, source))
+        logger.info(
+            f"Registered EventListener {listener.pretty()} on {Colors.yellow(self.name)} from {Colors.yellow(source)}"
+        )
+        logger.debug(listener)
+
+        # TODO Remove this printf, which is being used while developing the chat
+        # logging module.
+        # print(f"Registered EventListener {event_listener.pretty()} on {self.name}")
+
+    def add_commands(self, commands: Iterable[Command], source: Source):
+        for command in commands:
+            self.add_command(command, source)
+
+    def add_listeners(self, listeners: Iterable[EventListener], source: Source):
+        for listener in listeners:
+            self.add_listener(listener, source)
+
+    def get_all_commands(self, specified_command: str = "") -> List[Tuple[str, str]]:
+        """Return a list of commands and their docs registered to this EventsListener.
+
+        Args:
+            specified_command: If present, only return info for this command.
+
+        Returns:
+
+
+        """
+        names_and_docs = []
+        for name, commands in self.commands.items():
+            if specified_command and name != specified_command:
+                continue
+            command, source = commands[0]
+            names_and_docs.append((name, command.docs))
+        return names_and_docs
+
+    def handle(self, event: Event):
+        """Call every registered listener for a provided event."""
+        print(f"{datetime.now().strftime('%b %d %Y %H:%M:%S')} [{self.name}]")
+        print(event)
+        for listener, _ in self.listeners[type(event)]:
+            listener.execute(event, self)
 
     def listener(self, arg):
-        return self.events_handler.listener(arg)
+        """Convenience decorator for creating a listener and adding it to the bot."""
+        source = inspect.stack()[1].filename
+
+        def dec(x):
+            y = listener(arg)(x)
+            self.add_listener(y, source)
+
+        return dec
 
     def command(self, command_name):
-        return self.events_handler.command(command_name)
+        """Convenience decorator for creating a command and adding it to the bot.
+
+        Use the decorator on a command handler.
+
+        Examples:
+
+            >>> bot = add_bot('bot')
+            >>> bot.command('echo')
+            >>> def echo(e: CommandEvent):
+            >>>     e.thread.send_text(e.command_body)
+        """
+        source = inspect.stack()[1].filename
+
+        def dec(x):
+            y = command(command_name)(x)
+            self.add_command(y, source)
+
+        return dec
 
     def claim_threads(self, *threads) -> "Chatbot":
         """Assign this bot to chat threads. Returns the bot for chaining."""
@@ -56,29 +162,30 @@ class Chatbot:
         return self
 
     def load_plugin(self, plugin: Plugin) -> "Chatbot":
-        """Load a plugin. Returns the bot for chaining."""
-        if plugin.on_load:
-            plugin.on_load(plugin, self)
+        """Add a plugin to the bot. Returns the bot for chaining."""
+        plugin.on_load(self)
+
+        # Load any "method" listeners or commands, which depend on an instance of
+        # the plugin they are defined on. These are defined by using the @listener
+        # decorator on top of a method in a plugin definition.
+        method_listeners = []
+        method_commands = []
+        for attrib in dir(plugin):
+            if isinstance(getattr(plugin, attrib), EventListener):
+                method_listener = getattr(plugin, attrib)
+                method_listener.bind(plugin)
+                method_listeners.append(method_listener)
+            if isinstance(getattr(plugin, attrib), Command):
+                method_command = getattr(plugin, attrib)
+                method_command.bind(plugin)
+                method_commands.append(method_command)
+
+        self.add_listeners(plugin.listeners + method_listeners, plugin.name)
+        self.add_commands(plugin.commands + method_commands, plugin.name)
+
         self.plugins.append(plugin)
 
         return self
-
-    def handle(self, event):
-        """Handle an event."""
-        print(self)
-        print(f"{datetime.now().strftime('%b %d %Y %H:%M:%S')} [{self.name}]")
-        print(event)
-        self.events_handler.handle_event(event, self)
-        for plugin in self.plugins:
-            plugin.handle_event(event, self)
-
-    def get_all_commands(self, command: str = "") -> List[Tuple[str, str]]:
-        """Return a list of every command handled by this bot along with their docs."""
-        commands = self.events_handler.get_commands(command)
-        for plugin in self.plugins:
-            commands = commands + plugin.get_commands(command)
-
-        return commands
 
     def start(self):
         """Log into messenger and start listening to events for this bot."""

@@ -1,6 +1,6 @@
 import atexit
 import logging
-from typing import Any, Set, Optional, Dict, TypeVar
+from typing import Any, Set, Optional, Dict
 
 import attr
 import fbchat
@@ -42,8 +42,8 @@ class ChatbotManager:
 
         Args:
             name (str): The name of the bot.
-            db (Optional[peewee.Database]): Database for the bot to use. Uses the ChatManager's
-                database by default.
+            db (Optional[peewee.Database]): Database for the bot to use. Uses the
+                ChatManager's database by default.
         """
         _db = self.db if db is None else db
         bot = Chatbot.create(name=name, manager=self, db=_db)

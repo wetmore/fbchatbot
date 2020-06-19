@@ -11,6 +11,7 @@ import re
 import attr
 import fbchat
 
+from .event_listener import listener, EventListener
 from .types_util import Bot
 
 
@@ -145,12 +146,14 @@ def parse_event_from_message(
     )
 
 
+@listener
 def _fbMessage_to_message(event: fbchat.MessageEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     if event.author.id != bot_id:
         bot.handle(parse_event_from_message(event))
 
 
+@listener
 def _fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     if event.author.id != bot_id:
@@ -168,6 +171,7 @@ def _fbMessageReply_to_message(event: fbchat.MessageReplyEvent, bot: Bot):
         )
 
 
+@listener
 def _message_to_mention(event: TextMessageEvent, bot: Bot):
     bot_id = event.thread.session.user.id
     for mention in event.message.mentions:
@@ -187,6 +191,7 @@ cmd_regex = re.compile("^(\w+)(.*)")
 cmd_regex_dot = re.compile("^\.(\w+)(.*)")
 
 
+@listener
 def _mention_to_command(event: MentionEvent, bot: Bot):
     if event.mention.offset == 0:
         match = cmd_regex.match(event.message.text[event.mention.length :].strip())
@@ -204,6 +209,7 @@ def _mention_to_command(event: MentionEvent, bot: Bot):
             )
 
 
+@listener
 def _message_to_command(event: TextMessageEvent, bot: Bot):
     match = cmd_regex_dot.match(event.message.text)
     if match:
@@ -220,7 +226,7 @@ def _message_to_command(event: TextMessageEvent, bot: Bot):
         )
 
 
-core_listeners = [
+core_listeners: List[EventListener] = [
     _fbMessage_to_message,
     _fbMessageReply_to_message,
     _message_to_mention,

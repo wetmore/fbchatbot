@@ -1,17 +1,28 @@
-from typing import Any, Callable, Optional
+from abc import ABC, abstractmethod
+from typing import List
 
-import attr
+from .command import Command
+from .event_listener import EventListener
+from .types_util import Bot
 
-from .events_handler import EventsHandler
 
-
-@attr.s
-class Plugin(EventsHandler):
+class Plugin(ABC):
+    """TODO: docs
     """
-    TODO: docs
-    """
 
-    #: Name used to refer to the plugin, e.g. when writing config.py for a bot.
-    name: str = attr.ib(kw_only=True)
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
 
-    on_load: Optional[Callable[[Any, Any], None]] = attr.ib(default=None)
+    @property
+    def listeners(self) -> List[EventListener]:
+        return []
+
+    @property
+    def commands(self) -> List[Command]:
+        return []
+
+    def on_load(self, bot: Bot):
+        # Do nothing by default
+        pass
